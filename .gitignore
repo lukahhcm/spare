@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+
+# Local environments and secrets
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+
+# Datasets, checkpoints, and generated artifacts
+**/data/
+**/results/
+**/outputs/
+**/runtime_logs/
+**/logs/
+**/checkpoints/
+**/wandb/
+*.safetensors
+*.bin
+*.pt
+*.pth
+
+# Local backups and editor files
+*.backup.*
+*.swp
+.DS_Store
