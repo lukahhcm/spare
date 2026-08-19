@@ -7,8 +7,7 @@
 **Selective forgetting for multimodal tool-use agents.**
 
 [![Project Page](https://img.shields.io/badge/Project-Page-ef7f45?style=for-the-badge)](https://lukahhcm.github.io/spare/)
-[![Paper](https://img.shields.io/badge/Paper-PDF-4f7cff?style=for-the-badge)](https://lukahhcm.github.io/spare/assets/paper.pdf)
-[![Pages](https://img.shields.io/github/actions/workflow/status/lukahhcm/spare/pages.yml?style=for-the-badge&label=Project%20Page)](https://github.com/lukahhcm/spare/actions/workflows/pages.yml)
+![arXiv](https://img.shields.io/badge/arXiv-coming%20soon-b31b1b?style=for-the-badge)
 
 <br>
 
@@ -84,8 +83,8 @@ The main evaluation covers **GTA**, **V\***, **BLINK-Jigsaw**,
 
 SPARE provides the best average accuracy among the evaluated pruning methods.
 The complete per-benchmark results, SFT study, ablations, controlled stale-context
-diagnostic, and attention analysis are reported in the
-[paper](https://lukahhcm.github.io/spare/assets/paper.pdf).
+diagnostic, and attention analysis are reported in the paper. The arXiv link will
+be added after the public release.
 
 ## Installation
 
@@ -220,16 +219,4 @@ spare/
 
 ## Citation
 
-If SPARE is useful for your work, please cite the paper. Author and venue fields
-will be updated with the archival version.
-
-```bibtex
-@misc{spare2026,
-  title = {Buried in Textual Debt: Context Pruning with Visual Evidence
-           Preservation for MLLM Agents},
-  year  = {2026}
-}
-```
-
-Please also cite the original benchmark and framework releases used by the
-adapter you run.
+Citation information will be added after the paper is publicly available.
