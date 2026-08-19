@@ -1,132 +1,235 @@
+<div align="center">
+
 # SPARE
 
-Official code for **Buried in Textual Debt: Context Pruning with Visual
-Evidence Preservation for MLLM Agents**.
+### Buried in Textual Debt: Context Pruning with Visual Evidence Preservation for MLLM Agents
 
-[**Project Page**](https://lukahhcm.github.io/spare/) ·
-[**Paper**](https://lukahhcm.github.io/spare/assets/paper.pdf) ·
-[**Documentation**](docs/METHODS.md)
+**Selective forgetting for multimodal tool-use agents.**
 
-SPARE is a test-time context-pruning method for multimodal tool agents. It
-removes accumulated reasoning that has already served its purpose while
-retaining tool calls, tool observations, images, and task-relevant visual
-evidence. The goal is to reduce textual debt so later decisions rely more on
-the current visual state and less on stale self-generated text.
+[![Project Page](https://img.shields.io/badge/Project-Page-ef7f45?style=for-the-badge)](https://lukahhcm.github.io/spare/)
+[![Paper](https://img.shields.io/badge/Paper-PDF-4f7cff?style=for-the-badge)](https://lukahhcm.github.io/spare/assets/paper.pdf)
+[![Pages](https://img.shields.io/github/actions/workflow/status/lukahhcm/spare/pages.yml?style=for-the-badge&label=Project%20Page)](https://github.com/lukahhcm/spare/actions/workflows/pages.yml)
 
-## How SPARE works
+<br>
 
-```mermaid
-flowchart LR
-    A[Native multi-round tool trajectory] --> B{Agent triggers a task-state summary}
-    B --> C[Replay the same model with and without privileged summary context]
-    C --> D[Top-K reverse-KL score for each reasoning segment]
-    D -->|Low residual KL| E[Remove reasoning text]
-    D -->|High residual KL| F[Keep compact structured visual evidence]
-    E --> G[Continue the native tool loop]
-    F --> G
+<img src="docs/assets/spare-overview.png" alt="SPARE method overview" width="100%">
+
+</div>
+
+## TL;DR
+
+Long multimodal-agent trajectories accumulate self-generated plans, descriptions,
+and hypotheses. This **textual debt** can dominate the context and suppress newer
+visual evidence. SPARE uses a compact task-state summary as privileged diagnostic
+context, measures each historical segment's residual influence with
+summary-conditioned reverse KL, and selectively removes redundant reasoning while
+preserving images, tool calls, observations, and verifiable visual evidence.
+
+> Across five visual tool-use benchmarks and three MLLM backbones, SPARE achieves
+> the strongest macro-average accuracy among pruning methods while removing
+> **37.89–64.58%** of persistent reasoning tokens.
+
+## Contents
+
+- [Method at a glance](#method-at-a-glance)
+- [Results](#results)
+- [Installation](#installation)
+- [Quick start](#quick-start)
+- [Benchmark entry points](#benchmark-entry-points)
+- [Reproducing matched comparisons](#reproducing-matched-comparisons)
+- [Repository layout](#repository-layout)
+- [Citation](#citation)
+
+## Method at a glance
+
+SPARE runs inside the native multi-round tool loop:
+
+1. **Adaptive summary.** The agent summarizes the question, completed tools,
+   grounded evidence, and remaining uncertainty only when context management is
+   needed.
+2. **Summary-conditioned replay.** The same backbone replays candidate reasoning
+   with and without the task-state summary. No external verifier or reward model
+   is required.
+3. **Residual-sensitivity scoring.** Top-K reverse KL estimates which tokens still
+   contain information beyond the compact task state.
+4. **Evidence-preserving reconstruction.** Summary-covered reasoning is removed;
+   evidence-critical content is retained as compact OCR strings, coordinates,
+   crop identifiers, values, or candidate relations.
+
+The original action blocks, tool observations, and image inputs are never pruned.
+
+### Paper configuration
+
+| Parameter | Default | Meaning |
+| --- | ---: | --- |
+| `top_k` | `20` | Student vocabulary support used for reverse KL |
+| `tau` | `0.2` | Normalized token-level residual-sensitivity threshold |
+| `kappa` | `2` | Minimum number of high-sensitivity tokens needed to protect a segment |
+| Trigger | model-selected | Short trajectories avoid unnecessary pruning |
+| Decoder | greedy | Used for matched evaluation |
+
+Exact policy semantics and token accounting are documented in
+[`docs/METHODS.md`](docs/METHODS.md).
+
+## Results
+
+The main evaluation covers **GTA**, **V\***, **BLINK-Jigsaw**,
+**VisualToolBench**, and **m&m's**.
+
+| Backbone | Full Trace avg. acc. | SPARE avg. acc. | Reasoning pruned |
+| --- | ---: | ---: | ---: |
+| Qwen3-VL-30B-A3B-Instruct | 44.30 | **49.19** | 63.70% |
+| Qwen3-VL-8B-Instruct | **54.27** | 53.47 | 37.89% |
+| Llama-3.1-Nemotron-Nano-VL-8B-V1 | **30.10** | 29.97 | 64.58% |
+
+SPARE provides the best average accuracy among the evaluated pruning methods.
+The complete per-benchmark results, SFT study, ablations, controlled stale-context
+diagnostic, and attention analysis are reported in the
+[paper](https://lukahhcm.github.io/spare/assets/paper.pdf).
+
+## Installation
+
+### Requirements
+
+- Linux with NVIDIA GPUs for model and vision-tool serving;
+- Python 3.10 or newer;
+- an OpenAI-compatible endpoint that can return top-K token log probabilities;
+- the official datasets and assets for the benchmark you want to run.
+
+Benchmark toolchains have different dependencies, so we recommend one virtual
+environment per benchmark rather than a single monolithic environment.
+
+```bash
+git clone https://github.com/lukahhcm/spare.git
+cd spare
+
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+
+# Example: VisualToolBench adapter
+pip install -r benchmarks/visualtoolbench/requirements.txt
 ```
 
-The task-state summary is a compact diagnostic probe, not a replacement answer.
-SPARE compares the same model under the original and summary-conditioned
-contexts. Low-KL segments are already covered by the compact state and can be
-removed. High-KL segments retain concise evidence such as OCR strings,
-coordinates, crop identifiers, values, and candidate relations. The action
-blocks and external observations are never pruned.
+Dataset sources and expected local layouts are listed in
+[`docs/DATA.md`](docs/DATA.md). Datasets, checkpoints, rollout traces, generated
+images, logs, and credentials are intentionally excluded from Git.
 
-The default paper setting uses student top-20 reverse KL, normalized within
-each pruning event, with `tau=0.2` and `kappa=2`. Summarization is gated by the
-trajectory state, so short episodes avoid unnecessary pruning work.
+## Quick start
 
-## Evaluation protocol
+VisualToolBench provides the most compact end-to-end entry point. First serve the
+evaluated VLM and the KL/logprob endpoint, then export:
 
-We compare five conditions under each benchmark's native prompt, parser, tools,
-and scorer:
+```bash
+export DATA_PATH=/path/to/visualtoolbench_eval.parquet
+export MANIFEST_PATH=/path/to/evaluation_manifest.json
+export OUT_ROOT=/path/to/outputs/vtb
 
-| Condition | Context policy |
+export BASE_URL=http://127.0.0.1:8000/v1
+export MODEL_NAME=Qwen3-VL-8B-Instruct
+
+export KL_BASE_URL=http://127.0.0.1:8001/v1
+export KL_MODEL=Qwen3-VL-8B-Instruct
+```
+
+Run the four matched controls and SPARE:
+
+```bash
+bash benchmarks/visualtoolbench/run_4controls.sh
+bash benchmarks/visualtoolbench/run_spare.sh
+```
+
+Score all conditions with the same manifest, rubric, and judge configuration:
+
+```bash
+export PRED_ROOT="$OUT_ROOT"
+export ANCHORS_PATH=/path/to/anchor_records.jsonl
+export JUDGE_BASE_URL=http://127.0.0.1:8012/v1
+export JUDGE_MODEL=Qwen3-VL-30B-A3B-Instruct
+
+bash benchmarks/visualtoolbench/score_all.sh
+```
+
+Use `LIMIT=2` where supported for a smoke test before launching a complete run.
+
+## Benchmark entry points
+
+Each adapter preserves its benchmark's native prompt, tools, parser, and scorer.
+Only the reasoning-history policy changes.
+
+| Benchmark | Data / setup | Primary launcher | What is included |
+| --- | --- | --- | --- |
+| [VisualToolBench](benchmarks/visualtoolbench/README.md) | [Official repo](https://github.com/xi1ngang/VisualToolBench) | [`run_spare.sh`](benchmarks/visualtoolbench/run_spare.sh) | Multi-round rollout, local image tools, KL pruning, rubric scoring |
+| [GTA](benchmarks/gta/README.md) | [OpenCompass GTA](https://github.com/open-compass/GTA) | [`run_gta_8gpu.py`](benchmarks/gta/code/scripts/run_gta_8gpu.py) | OpenCompass adapter, sharding, fixed-set verification |
+| [V*](benchmarks/vstar/README.md) | [vstar-bench](https://huggingface.co/datasets/lmms-lab/vstar-bench) | [`run_fiveway.sh`](benchmarks/vstar/run_fiveway.sh) | Visual search, Point/OCR/Crop workers, five matched methods |
+| [BLINK-Jigsaw](benchmarks/jigsaw/README.md) | [BLINK](https://huggingface.co/datasets/BLINK-Benchmark/BLINK) | [`run_fiveway.sh`](benchmarks/jigsaw/run_fiveway.sh) | Jigsaw-native spatial and image-editing tools |
+| [m&m's](benchmarks/mnms/README.md) | [mnms](https://huggingface.co/datasets/zixianma/mnms) | [`run_mnms_plan_v5_only.sh`](benchmarks/mnms/launchers/run_mnms_plan_v5_only.sh) | Multimodal plan execution, KL core, pruning analysis |
+
+## Reproducing matched comparisons
+
+The release implements five evaluation conditions:
+
+| Condition | History policy |
 | --- | --- |
-| Direct answer | Answer without tools |
-| Full trace | Use tools and retain all reasoning |
-| Delete all reasoning | Remove completed reasoning, keep actions and observations |
-| Visual evidence-only | Rewrite every reasoning segment as structured visual evidence |
-| SPARE | Use summary-conditioned KL to select deletion or evidence preservation |
+| Direct answer | Answer without invoking tools |
+| Full trace | Retain complete reasoning, actions, and observations |
+| Delete all reasoning | Remove completed reasoning while preserving tools and observations |
+| Visual evidence-only | Non-selectively rewrite reasoning as structured visual evidence |
+| **SPARE** | Use summary-conditioned KL to select removal or evidence preservation |
 
-The paper evaluates Qwen3-VL-8B-Instruct, Qwen3-VL-30B-A3B-Instruct, and
-Llama-3.1-Nemotron-Nano-VL-8B-V1. Across the reported settings, SPARE gives the
-best average accuracy among pruning methods while removing 37.89 to 64.58
-percent of reasoning tokens. Full tables and ablations are provided in the
-paper.
+For a valid comparison, keep the following fixed across conditions:
+
+- model checkpoint, chat template, decoding parameters, and tool-round budget;
+- benchmark manifest and available tool set;
+- KL endpoint model, `top_k`, `tau`, and `kappa`;
+- judge checkpoint, judge prompt, official parser, and scorer version.
+
+The runners record predictions, tool traces, summary/KL events, latency, runtime
+errors, and reasoning-token counts. Primary results should never use cached
+answers or fabricated tool observations.
+
+### Lightweight verification
+
+Python modules and shell launchers can be checked without downloading datasets:
+
+```bash
+python -m compileall -q benchmarks
+find benchmarks -type f -name '*.sh' -print0 | xargs -0 -n1 bash -n
+```
+
+Benchmark-specific regression commands are listed in the corresponding README.
 
 ## Repository layout
 
 ```text
 spare/
 ├── benchmarks/
-│   ├── visualtoolbench/   # VTB rollout, KL pruning, scoring, token accounting
-│   ├── mnms/              # m&m's plan and tool execution
-│   ├── gta/               # GTA and OpenCompass adapter
-│   ├── vstar/             # V* visual search and Point worker
-│   └── jigsaw/            # BLINK-Jigsaw tool loop
+│   ├── visualtoolbench/   # rollout, SPARE policy, scoring, token analysis
+│   ├── gta/               # GTA / OpenCompass integration and 8-GPU launcher
+│   ├── vstar/             # V* visual search and Point/OCR tool workers
+│   ├── jigsaw/            # BLINK-Jigsaw spatial tool loop
+│   └── mnms/              # m&m's planning and execution
 ├── docs/
-│   ├── DATA.md            # dataset sources and expected local layout
-│   ├── METHODS.md         # exact method definitions and pruning metric
+│   ├── index.html         # deployed project page
+│   ├── DATA.md            # dataset sources and preparation
+│   ├── METHODS.md         # policy definitions and pruning metric
 │   └── RESULTS.md         # release-level result note
+├── .github/workflows/     # GitHub Pages deployment
 └── README.md
 ```
 
-Benchmark-specific code stays separate because the tools and official scoring
-protocols differ. The five inference conditions and SPARE decision rule are
-kept consistent.
-
-## Quick start
-
-Use separate environments for model serving and evaluation. Serve the VLM and
-the logprob-capable KL endpoint through an OpenAI-compatible API, then install
-the adapter requirements. For VisualToolBench:
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r benchmarks/visualtoolbench/requirements.txt
-
-export DATA_PATH=/path/to/visualtoolbench_eval.parquet
-export MANIFEST_PATH=/path/to/evaluation_manifest.json
-export OUT_ROOT=/path/to/outputs/vtb
-export BASE_URL=http://127.0.0.1:8000/v1
-export MODEL_NAME=Qwen3-VL-8B-Instruct
-export KL_BASE_URL=http://127.0.0.1:8001/v1
-export KL_MODEL=Qwen3-VL-8B-Instruct
-
-bash benchmarks/visualtoolbench/run_4controls.sh
-bash benchmarks/visualtoolbench/run_spare.sh
-
-export PRED_ROOT="$OUT_ROOT"
-export ANCHORS_PATH=/path/to/anchor_records.jsonl
-export JUDGE_BASE_URL=http://127.0.0.1:8012/v1
-export JUDGE_MODEL=Qwen3-VL-30B-A3B-Instruct
-bash benchmarks/visualtoolbench/score_all.sh
-```
-
-Dataset preparation for every benchmark is documented once in
-[`docs/DATA.md`](docs/DATA.md). Exact method semantics and token accounting are
-in [`docs/METHODS.md`](docs/METHODS.md). Raw datasets, checkpoints, generated
-images, rollout traces, logs, and credentials are intentionally excluded from
-Git.
-
-## Reproducibility
-
-Keep the following fixed for a matched comparison:
-
-- temperature, sampling policy, maximum output tokens, and tool-round budget;
-- the model prompt template and visible reasoning format;
-- native benchmark tool availability and transport;
-- KL endpoint model, `top_k`, `tau`, and `kappa`;
-- evaluation manifest, judge model, judge prompt, and scorer version.
-
-The included runners record predictions, tool traces, summary/KL events,
-latency, runtime errors, and reasoning-token counts. No cached-answer or fake
-tool-observation fallback should be used for a primary result.
-
 ## Citation
 
-Please cite the paper if you use SPARE. Benchmark datasets and copied framework
-components retain their original licenses and citation requirements.
+If SPARE is useful for your work, please cite the paper. Author and venue fields
+will be updated with the archival version.
+
+```bibtex
+@misc{spare2026,
+  title = {Buried in Textual Debt: Context Pruning with Visual Evidence
+           Preservation for MLLM Agents},
+  year  = {2026}
+}
+```
+
+Please also cite the original benchmark and framework releases used by the
+adapter you run.
