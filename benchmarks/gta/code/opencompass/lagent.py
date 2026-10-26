@@ -430,7 +430,7 @@ class LagentAgent:
         self._model_name = resolved_model_name
         # GTA keeps the model's native/internal thinking disabled.  This flag
         # only controls whether the parsed, user-visible thought is preserved
-        # in the runner output (as VTB does).
+        # in the runner output.
         self.reasoning_output = reasoning_output
         self._v5_hidden_summary = ''
         self._v5_final_summary_used = False

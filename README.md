@@ -93,8 +93,7 @@ The three-benchmark aggregate comparison in the TL;DR uses GTA, BLINK-Jigsaw,
 and m&m's and should be distinguished from this four-benchmark table.
 
 See [detailed results](docs/RESULTS.md), the [paper PDF](docs/assets/paper.pdf),
-and the [arXiv record](https://arxiv.org/abs/2608.22963). VisualToolBench is retained
-as an additional code adapter and is not part of the main evaluation table.
+and the [arXiv record](https://arxiv.org/abs/2608.22963).
 
 ## Installation
 
@@ -116,8 +115,8 @@ python -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
 
-# Example: VisualToolBench adapter
-pip install -r benchmarks/visualtoolbench/requirements.txt
+# Example: V* adapter
+pip install -r benchmarks/vstar/requirements.txt
 ```
 
 Dataset sources and expected local layouts are listed in
@@ -126,41 +125,25 @@ images, logs, and credentials are intentionally excluded from Git.
 
 ## Quick start
 
-The additional VisualToolBench adapter provides an end-to-end usage example.
-For the paper's main evaluation, use the benchmark entry points below. First serve the
-evaluated VLM and the KL/logprob endpoint, then export:
+The V* adapter evaluates five methods on one benchmark: Direct answer, Full
+Trace, Delete all reasoning, Visual evidence-only, and SPARE.
+
+First follow the [V* setup instructions](benchmarks/vstar/README.md) to prepare
+the dataset manifest and start the model endpoint, controller, Point worker, and
+OCR worker. Then run from the repository root:
 
 ```bash
-export DATA_PATH=/path/to/visualtoolbench_eval.parquet
-export MANIFEST_PATH=/path/to/evaluation_manifest.json
-export OUT_ROOT=/path/to/outputs/vtb
+export BASE_URL=http://127.0.0.1:8011/v1
+export MODEL=qwen3-vl-8b
+export CONTROLLER_ADDR=http://127.0.0.1:20001
+export ITEMS_MANIFEST="$PWD/benchmarks/vstar/data/vstar/vstar.jsonl"
 
-export BASE_URL=http://127.0.0.1:8000/v1
-export MODEL_NAME=Qwen3-VL-8B-Instruct
-
-export KL_BASE_URL=http://127.0.0.1:8001/v1
-export KL_MODEL=Qwen3-VL-8B-Instruct
+bash benchmarks/vstar/run_fiveway.sh
 ```
 
-Run the four matched controls and SPARE:
-
-```bash
-bash benchmarks/visualtoolbench/run_4controls.sh
-bash benchmarks/visualtoolbench/run_spare.sh
-```
-
-Score all conditions with the same manifest, rubric, and judge configuration:
-
-```bash
-export PRED_ROOT="$OUT_ROOT"
-export ANCHORS_PATH=/path/to/anchor_records.jsonl
-export JUDGE_BASE_URL=http://127.0.0.1:8012/v1
-export JUDGE_MODEL=Qwen3-VL-30B-A3B-Instruct
-
-bash benchmarks/visualtoolbench/score_all.sh
-```
-
-Use `LIMIT=2` where supported for a smoke test before launching a complete run.
+Set `LIMIT=2` for a smoke test before launching a complete run. The launcher
+writes each method's outputs to its own subdirectory under
+`benchmarks/vstar/results/`, or under the directory specified by `OUT`.
 
 ## Benchmark entry points
 
@@ -169,7 +152,6 @@ Only the reasoning-history policy changes.
 
 | Benchmark | Data / setup | Primary launcher | What is included |
 | --- | --- | --- | --- |
-| [VisualToolBench](benchmarks/visualtoolbench/README.md) | [Official repo](https://github.com/xi1ngang/VisualToolBench) | [`run_spare.sh`](benchmarks/visualtoolbench/run_spare.sh) | Multi-round rollout, local image tools, KL pruning, rubric scoring |
 | [GTA](benchmarks/gta/README.md) | [OpenCompass GTA](https://github.com/open-compass/GTA) | [`run_gta_8gpu.py`](benchmarks/gta/code/scripts/run_gta_8gpu.py) | OpenCompass adapter, sharding, fixed-set verification |
 | [V*](benchmarks/vstar/README.md) | [vstar-bench](https://huggingface.co/datasets/lmms-lab/vstar-bench) | [`run_fiveway.sh`](benchmarks/vstar/run_fiveway.sh) | Visual search, Point/OCR/Crop workers, five matched methods |
 | [BLINK-Jigsaw](benchmarks/jigsaw/README.md) | [BLINK](https://huggingface.co/datasets/BLINK-Benchmark/BLINK) | [`run_fiveway.sh`](benchmarks/jigsaw/run_fiveway.sh) | Jigsaw-native spatial and image-editing tools |
@@ -214,7 +196,6 @@ Benchmark-specific regression commands are listed in the corresponding README.
 ```text
 spare/
 ├── benchmarks/
-│   ├── visualtoolbench/   # rollout, SPARE policy, scoring, token analysis
 │   ├── gta/               # GTA / OpenCompass integration and 8-GPU launcher
 │   ├── vstar/             # V* visual search and Point/OCR tool workers
 │   ├── jigsaw/            # BLINK-Jigsaw spatial tool loop

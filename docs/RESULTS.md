@@ -22,8 +22,6 @@ remaining token count.
 
 SPARE improves average accuracy on both Qwen backbones. Nemotron shows a small
 accuracy decrease, from 35.99 to 35.35, while pruning 41.34% of reasoning tokens.
-VisualToolBench remains available as an additional adapter, but is not included
-in this main evaluation.
 
 ## Aggregate accuracy–pruning comparison
 

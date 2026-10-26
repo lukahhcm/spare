@@ -6,18 +6,10 @@ its official source and place it under the corresponding adapter's ignored
 
 | Benchmark | Official source | Evaluation split |
 | --- | --- | --- |
-| VisualToolBench | [xi1ngang/VisualToolBench](https://github.com/xi1ngang/VisualToolBench) | Official evaluation tasks and images |
 | m&m's | [zixianma/mnms](https://huggingface.co/datasets/zixianma/mnms) | `test_human_verified_filtered` |
 | GTA | [OpenCompass GTA](https://github.com/open-compass/GTA), [Jize1/GTA](https://huggingface.co/datasets/Jize1/GTA) | Official evaluation data |
 | V* | [lmms-lab/vstar-bench](https://huggingface.co/datasets/lmms-lab/vstar-bench) | `test` |
 | BLINK-Jigsaw | [BLINK-Benchmark/BLINK](https://huggingface.co/datasets/BLINK-Benchmark/BLINK) | `Jigsaw`, `val` |
-
-## VisualToolBench
-
-Prepare a parquet file with the official task rows and a JSON manifest with the
-evaluation IDs. Set `DATA_PATH` and `MANIFEST_PATH` before running the VTB
-launchers. Fixed-rubric scoring additionally expects anchor records derived
-from the official ground truth and rubric metadata.
 
 ## V* and BLINK-Jigsaw
 

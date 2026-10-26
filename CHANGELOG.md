@@ -2,6 +2,8 @@
 
 ## [2026-10-26]
 
+- Limited the code release to the four main evaluation benchmarks and switched the quick-start example to V*.
+
 - Updated the README, method definitions, results, and project page to match the revised paper.
 - Distinguished the four-benchmark main evaluation from the three-benchmark aggregate comparison.
 - Clarified temporary summary use, rule-based evidence extraction, and sample-weighted metrics.
@@ -12,15 +14,6 @@
 - Reorganized the release around one paper-facing framework under
   `benchmarks/`, with shared method and data documentation at the repository
   root.
-- Added the latest portable VisualToolBench rollout, SPARE KL policy, pruning
-  analysis, paired comparison, and rubric-scoring code without dataset or
-  generated-result artifacts.
-- Added `run_spare.sh` as the paper-aligned VTB entry point for adaptive
-  model-selected summarization and mixed KL/evidence pruning.
-- Added `score_all.sh` so the five VTB conditions are scored in one matched
-  rubric invocation.
-- Replaced the machine-specific Python path in the VTB launchers with the
-  configurable `PYTHON_BIN` setting.
 - Reframed the main README around textual debt, adaptive summary-conditioned
   replay, KL selection, and visual-evidence preservation.
 - Moved detailed result material out of the landing page and kept only the

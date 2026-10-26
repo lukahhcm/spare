@@ -199,7 +199,7 @@
           <p class="section-kicker">Open implementation</p>
           <h2>Run SPARE in the native tool loop.</h2>
         </div>
-        <p>The release includes benchmark-specific adapters, matched controls, token accounting, scoring, and regression tests. The example below uses the additional VisualToolBench adapter. See the repository README for data and endpoint setup.</p>
+        <p>The release includes benchmark-specific adapters, matched controls, token accounting, scoring, and regression tests. The example below uses V*, one of the four evaluation benchmarks. See the repository README for data and endpoint setup.</p>
       </div>
 
       <div class="code-grid">
@@ -215,11 +215,16 @@ source .venv/bin/activate
 
 <span class="comment"># Install one benchmark adapter</span>
 pip install -r \
-  benchmarks/visualtoolbench/requirements.txt
+  benchmarks/vstar/requirements.txt
 
-<span class="comment"># Run matched controls and SPARE</span>
-bash benchmarks/visualtoolbench/run_4controls.sh
-bash benchmarks/visualtoolbench/run_spare.sh</code></pre>
+<span class="comment"># Prepare data and start model/tools (see README)</span>
+export BASE_URL=http://127.0.0.1:8011/v1
+export MODEL=qwen3-vl-8b
+export CONTROLLER_ADDR=http://127.0.0.1:20001
+export ITEMS_MANIFEST="$PWD/benchmarks/vstar/data/vstar/vstar.jsonl"
+
+<span class="comment"># Run five methods on V*</span>
+bash benchmarks/vstar/run_fiveway.sh</code></pre>
         </div>
         <div class="repo-card">
           <div class="repo-heading"><span class="brand-mark">S</span><div><strong>lukahhcm/spare</strong><small>Official implementation</small></div></div>
@@ -228,7 +233,6 @@ bash benchmarks/visualtoolbench/run_spare.sh</code></pre>
             <li><span>benchmarks/vstar</span><b>Visual search</b></li>
             <li><span>benchmarks/jigsaw</span><b>Spatial tools</b></li>
             <li><span>benchmarks/mnms</span><b>Planning only</b></li>
-            <li><span>benchmarks/visualtoolbench</span><b>Full rollout</b></li>
           </ul>
           <a class="button primary full" href="https://github.com/lukahhcm/spare">View repository <span>↗</span></a>
         </div>

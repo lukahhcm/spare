@@ -3,7 +3,7 @@
 SPARE (Selective Pruning of Accumulated Reasoning with Visual Evidence
 Preservation) manages reasoning history inside a multimodal agent's native tool
 loop. The paper's main evaluation uses GTA, V*, BLINK-Jigsaw, and m&m's in a
-planning-only setting. VisualToolBench is an additional released adapter.
+planning-only setting.
 
 ## Conditions
 

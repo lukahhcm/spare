@@ -32,5 +32,5 @@ format.
    machine-readable JSONL plus aggregate summaries.
 
 See `adapters/README.md` for the exact host-side insertion point for GTA,
-ToolVQA, m&m's, ToolSandbox, AdaReasoner/ReasonMine, VisualToolBench, and
+ToolVQA, m&m's, ToolSandbox, AdaReasoner/ReasonMine, and
 VTC-Bench.
