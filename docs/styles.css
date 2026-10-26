@@ -133,7 +133,7 @@ button { font: inherit; }
 
 .attention-card img { width: 100%; }
 .benchmarks-section { padding: 110px 0; background: var(--white); border-block: 1px solid var(--line); }
-.benchmark-list { display: grid; grid-template-columns: repeat(5,1fr); margin-top: 54px; border-block: 1px solid var(--line); }
+.benchmark-list { display: grid; grid-template-columns: repeat(4,1fr); margin-top: 54px; border-block: 1px solid var(--line); }
 .benchmark-list article { padding: 26px 20px 32px; border-right: 1px solid var(--line); }
 .benchmark-list article:last-child { border: 0; }
 .benchmark-list span { color: var(--orange); font: 500 11px "DM Mono", monospace; }

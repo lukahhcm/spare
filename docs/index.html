@@ -45,18 +45,18 @@
       <h1>Buried in <em>Textual Debt</em></h1>
       <p class="hero-subtitle">Context Pruning with Visual Evidence Preservation for MLLM Agents</p>
       <p class="hero-copy">
-        SPARE selectively forgets reasoning that has already served its purpose—without pruning the images,
-        tool observations, or visual evidence an agent still needs.
+        SPARE selectively prunes accumulated reasoning and extracts concise visual evidence,
+        while keeping tool calls, observations, and images unchanged.
       </p>
       <div class="hero-actions">
         <a class="button primary" href="assets/paper.pdf">Read the paper <span>↗</span></a>
         <a class="button secondary" href="https://github.com/lukahhcm/spare">Explore the code <span>↗</span></a>
-        <a class="text-link" href="#method">See how it works <span>↓</span></a>
+        <a class="text-link" href="https://arxiv.org/abs/2608.22963">arXiv: 2608.22963 <span>↗</span></a>
       </div>
 
       <div class="hero-stats" aria-label="Project highlights">
-        <article><strong>37.89–64.58%</strong><span>reasoning tokens pruned</span></article>
-        <article><strong>5</strong><span>visual tool-use benchmarks</span></article>
+        <article><strong>41.34–69.40%</strong><span>reasoning tokens pruned</span></article>
+        <article><strong>4</strong><span>main evaluation benchmarks</span></article>
         <article><strong>3</strong><span>MLLM backbones</span></article>
         <article><strong>Test-time</strong><span>no auxiliary verifier</span></article>
       </div>
@@ -81,7 +81,7 @@
           <p class="section-kicker">The method</p>
           <h2>Selective forgetting, guided by the model itself.</h2>
         </div>
-        <p>SPARE uses a compact task-state summary as privileged diagnostic context, then asks whether each historical segment still changes the model’s continuation distribution.</p>
+        <p>SPARE uses a compact task-state summary as temporary context for diagnosis and the next reasoning step. The summary is not stored in the persistent trajectory.</p>
       </div>
 
       <figure class="paper-figure overview-card">
@@ -98,12 +98,12 @@
         <article>
           <span class="step">02</span>
           <h3>Measure residue</h3>
-          <p>The same model replays the history with and without the summary. Top-K reverse KL reveals what the summary does not yet cover.</p>
+          <p>The same model replays the history with and without the summary. Truncated reverse KL measures summary-conditioned residual sensitivity.</p>
         </article>
         <article>
           <span class="step">03</span>
           <h3>Preserve evidence</h3>
-          <p>Summary-covered text is removed; evidence-critical spans become concise, verifiable visual records. Tools and observations stay intact.</p>
+          <p>Low-sensitivity text is removed. Programmatic rules extract concise visual evidence from selected high-sensitivity segments. Tool calls, observations, and images stay intact.</p>
         </article>
       </div>
     </section>
@@ -115,30 +115,30 @@
             <p class="section-kicker">Results</p>
             <h2>A better accuracy–context trade-off.</h2>
           </div>
-          <p>Across five visual tool-use benchmarks, SPARE attains the strongest macro-average accuracy among pruning methods while substantially reducing persistent reasoning history.</p>
+          <p>Across four benchmarks, SPARE improves sample-weighted accuracy over Full Trace on both Qwen backbones. Nemotron shows a small accuracy decrease while pruning 41.34% of reasoning tokens.</p>
         </div>
 
         <div class="results-grid">
           <article class="result-card featured">
             <div class="result-model">Qwen3-VL-30B-A3B</div>
-            <div class="result-number">+4.89<span>pp</span></div>
-            <p>average accuracy over Full Trace</p>
-            <div class="meter"><span style="width:63.7%"></span></div>
-            <strong>63.70% reasoning pruned</strong>
+            <div class="result-number">+2.71<span>pp</span></div>
+            <p>sample-weighted accuracy over Full Trace</p>
+            <div class="meter"><span style="width:69.4%"></span></div>
+            <strong>69.40% reasoning pruned</strong>
           </article>
           <article class="result-card">
             <div class="result-model">Qwen3-VL-8B</div>
-            <div class="result-number">53.47<span>%</span></div>
-            <p>macro-average accuracy</p>
-            <div class="meter"><span style="width:37.89%"></span></div>
-            <strong>37.89% reasoning pruned</strong>
+            <div class="result-number">65.29<span>%</span></div>
+            <p>sample-weighted accuracy</p>
+            <div class="meter"><span style="width:61.20%"></span></div>
+            <strong>61.20% reasoning pruned</strong>
           </article>
           <article class="result-card">
             <div class="result-model">Nemotron-Nano-VL-8B</div>
-            <div class="result-number">64.58<span>%</span></div>
+            <div class="result-number">41.34<span>%</span></div>
             <p>reasoning removed</p>
-            <div class="meter"><span style="width:64.58%"></span></div>
-            <strong>near-full-trace accuracy</strong>
+            <div class="meter"><span style="width:41.34%"></span></div>
+            <strong>35.35% accuracy vs. 35.99% Full Trace</strong>
           </article>
         </div>
 
@@ -146,20 +146,20 @@
           <div>
             <p class="section-kicker">Controlled diagnostic</p>
             <h3>Less likely to copy stale answers.</h3>
-            <p>When an early textual hypothesis conflicts with later tool evidence, automatic SPARE pruning reduces stale-answer copying more than random deletion.</p>
+            <p>On the constructed GTA subset, SPARE reduces stale-answer copying more than random deletion. Questions, images, and tool interactions are held fixed. Free-form answer accuracy is unchanged, so this diagnostic measures reduced reliance on stale textual history.</p>
           </div>
           <div class="diagnostic-bars">
             <div class="bar-group">
               <span>Qwen3-VL-8B</span>
               <div class="bar-row"><label>Full Trace</label><div><i style="width:80%"></i></div><b>36.36</b></div>
               <div class="bar-row muted"><label>Random-1</label><div><i style="width:60%"></i></div><b>27.27</b></div>
-              <div class="bar-row ours"><label>SPARE-V5</label><div><i style="width:20%"></i></div><b>9.09</b></div>
+              <div class="bar-row ours"><label>SPARE</label><div><i style="width:20%"></i></div><b>9.09</b></div>
             </div>
             <div class="bar-group">
               <span>Qwen3-VL-30B-A3B</span>
               <div class="bar-row"><label>Full Trace</label><div><i style="width:100%"></i></div><b>45.45</b></div>
               <div class="bar-row muted"><label>Random-1</label><div><i style="width:50%"></i></div><b>22.73</b></div>
-              <div class="bar-row ours"><label>SPARE-V5</label><div><i style="width:40%"></i></div><b>18.18</b></div>
+              <div class="bar-row ours"><label>SPARE</label><div><i style="width:40%"></i></div><b>18.18</b></div>
             </div>
             <small>Stale-copy rate (%) ↓</small>
           </div>
@@ -173,7 +173,7 @@
           <p class="section-kicker">Mechanism evidence</p>
           <h2>Visual evidence comes back into focus.</h2>
         </div>
-        <p>After pruning summary-covered reasoning, text-to-image attention increases across nearly all decoder layers—consistent with reduced textual dominance.</p>
+        <p>Across ten tool-use trajectories, attention to image tokens increases across nearly all decoder layers after pruning, consistent with reduced textual dominance.</p>
       </div>
       <figure class="paper-figure attention-card">
         <img src="assets/attention-analysis.png" alt="Line chart showing higher attention to image tokens after pruning across decoder layers">
@@ -183,13 +183,12 @@
     <section class="benchmarks-section">
       <div class="section-shell">
         <p class="section-kicker">Evaluation suite</p>
-        <h2>Five ways to test a multimodal agent.</h2>
+        <h2>Four benchmarks for the main evaluation.</h2>
         <div class="benchmark-list">
           <article><span>01</span><h3>GTA</h3><p>General tool agents</p></article>
           <article><span>02</span><h3>V*</h3><p>Guided visual search</p></article>
           <article><span>03</span><h3>BLINK-Jigsaw</h3><p>Spatial perception</p></article>
-          <article><span>04</span><h3>VisualToolBench</h3><p>Tool-enabled vision</p></article>
-          <article><span>05</span><h3>m&m's</h3><p>Multimodal planning</p></article>
+          <article><span>04</span><h3>m&m's</h3><p>Planning only</p></article>
         </div>
       </div>
     </section>
@@ -200,13 +199,17 @@
           <p class="section-kicker">Open implementation</p>
           <h2>Run SPARE in the native tool loop.</h2>
         </div>
-        <p>The release includes benchmark-specific adapters, matched controls, token accounting, scoring, and regression tests.</p>
+        <p>The release includes benchmark-specific adapters, matched controls, token accounting, scoring, and regression tests. The example below uses the additional VisualToolBench adapter. See the repository README for data and endpoint setup.</p>
       </div>
 
       <div class="code-grid">
         <div class="terminal">
           <div class="terminal-top"><span></span><span></span><span></span><b>quick start</b></div>
-          <pre><code><span class="comment"># Create an isolated environment</span>
+          <pre><code><span class="comment"># Clone the repository
+git clone https://github.com/lukahhcm/spare.git
+cd spare
+
+# Create an isolated environment</span>
 python -m venv .venv
 source .venv/bin/activate
 
@@ -224,7 +227,7 @@ bash benchmarks/visualtoolbench/run_spare.sh</code></pre>
             <li><span>benchmarks/gta</span><b>GTA + OpenCompass</b></li>
             <li><span>benchmarks/vstar</span><b>Visual search</b></li>
             <li><span>benchmarks/jigsaw</span><b>Spatial tools</b></li>
-            <li><span>benchmarks/mnms</span><b>Plan execution</b></li>
+            <li><span>benchmarks/mnms</span><b>Planning only</b></li>
             <li><span>benchmarks/visualtoolbench</span><b>Full rollout</b></li>
           </ul>
           <a class="button primary full" href="https://github.com/lukahhcm/spare">View repository <span>↗</span></a>
@@ -241,10 +244,14 @@ bash benchmarks/visualtoolbench/run_spare.sh</code></pre>
         </div>
         <div class="citation-box">
           <button class="copy-button" type="button" data-copy-target="citation-code">Copy BibTeX</button>
-          <pre id="citation-code"><code>@misc{spare2026,
-  title = {Buried in Textual Debt: Context Pruning with
-           Visual Evidence Preservation for MLLM Agents},
-  year  = {2026}
+          <pre id="citation-code"><code>@misc{huang2026buried,
+  title = {Buried in Textual Debt: Context Pruning with Visual Evidence Preservation for MLLM Agents},
+  author = {Yuchen Huang and Sijia Li and Jun Zhang and Yi R. Fung},
+  year = {2026},
+  eprint = {2608.22963},
+  archivePrefix = {arXiv},
+  primaryClass = {cs.AI},
+  url = {https://arxiv.org/abs/2608.22963}
 }</code></pre>
         </div>
       </div>
@@ -255,7 +262,7 @@ bash benchmarks/visualtoolbench/run_spare.sh</code></pre>
     <div class="section-shell footer-inner">
       <div><span class="brand-mark">S</span><strong>SPARE</strong></div>
       <p>Less textual debt. More visual evidence.</p>
-      <div><a href="assets/paper.pdf">Paper</a><a href="https://github.com/lukahhcm/spare">Code</a><a href="#top">Back to top ↑</a></div>
+      <div><a href="assets/paper.pdf">Paper</a><a href="https://arxiv.org/abs/2608.22963">arXiv</a><a href="https://github.com/lukahhcm/spare">Code</a><a href="#top">Back to top ↑</a></div>
     </div>
   </footer>
   <script src="site.js"></script>

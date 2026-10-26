@@ -1,5 +1,12 @@
 # Changelog
 
+## [2026-10-26]
+
+- Updated the README, method definitions, results, and project page to match the revised paper.
+- Distinguished the four-benchmark main evaluation from the three-benchmark aggregate comparison.
+- Clarified temporary summary use, rule-based evidence extraction, and sample-weighted metrics.
+- Added the arXiv record and complete BibTeX citation, and refreshed the downloadable preprint.
+
 ## [2026-08-19 05:55]
 
 - Reorganized the release around one paper-facing framework under

@@ -1,50 +1,62 @@
 # Method definitions
 
-All comparisons use the benchmark's native prompt, tool loop, parser, and
-scorer. Only the reasoning-history policy changes.
+SPARE (Selective Pruning of Accumulated Reasoning with Visual Evidence
+Preservation) manages reasoning history inside a multimodal agent's native tool
+loop. The paper's main evaluation uses GTA, V*, BLINK-Jigsaw, and m&m's in a
+planning-only setting. VisualToolBench is an additional released adapter.
 
 ## Conditions
 
-`direct-no-tool` disables tools and asks for the final answer under the same
-answer-format contract used by the agentic runs.
+| Condition | History policy |
+| --- | --- |
+| Direct answer | Answer without invoking tools |
+| Full Trace | Retain complete reasoning, actions, and observations |
+| Delete all reasoning | Remove completed reasoning while preserving tools and observations |
+| Visual evidence-only | Extract compact visual evidence without KL selection |
+| SPARE | Select segments using summary-conditioned residual sensitivity, then extract evidence from selected segments |
 
-`tool-baseline` keeps the complete reasoning, action, and observation history.
+## Summary-conditioned replay
 
-`delete-reasoning` clears every completed assistant reasoning span. Tool calls,
-tool observations, and image inputs remain unchanged.
-
-`visual-evidence` replaces each completed reasoning span with compact,
-structured visual facts. It does not use KL selection.
-
-`SPARE` forms a compact task-state summary after the adaptive gate is met. The
-same model scores the candidate history under the original and
-summary-conditioned contexts. It drops low-residual-KL reasoning and preserves
-high-residual-KL content as structured visual evidence.
+When the agent invokes `summarize_the_task`, SPARE creates a compact task-state
+summary. The same model replays the same historical reasoning prefix under a
+common context, with and without the summary. The summary serves as temporary
+context for diagnosis and the next reasoning step. It is not stored in the
+persistent trajectory.
 
 ## KL decision
 
-The default configuration uses the student's top-20 vocabulary support. At
-each replay position, SPARE computes reverse KL from the student distribution
-to the summary-conditioned distribution, then min-max normalizes token scores
-within the pruning event. A segment is evidence-critical when at least
-`kappa=2` tokens exceed `tau=0.2`.
+The paper uses truncated reverse KL in the student-to-summary-conditioned
+direction on the student's top-20 vocabulary support. Missing teacher log
+probabilities use a fallback of −20. Scores are min-max normalized within each
+pruning event with epsilon 1e-12. Constant scores normalize to zero.
 
-## Persistent context
+A segment is selected for evidence extraction when at least `kappa=2` tokens
+have normalized scores above `tau=0.2`. Low-sensitivity segments are removed.
+This truncated score is a residual-sensitivity heuristic. It does not establish
+semantic coverage or inherit every property of full-distribution KL.
 
-The summary is privileged diagnostic state. It does not replace the original
-trajectory. If a probe commits no pruning, it is discarded. When pruning is
-accepted, the next decision can receive the compact state once, while the
-persistent history stores the reconstructed reasoning, original actions, tool
-observations, and images.
+## Evidence extraction and persistent context
+
+Programmatic rules extract visual evidence from selected high-sensitivity
+segments, retaining at most four items and 600 characters per segment. This is
+not an additional LLM rewriting step. If no evidence is extracted, the segment
+is removed. Original tool calls, tool observations, and images remain unchanged.
+The next generated reasoning and action are recorded normally, without retaining
+the temporary summary.
 
 ## Pruning ratio
 
-The reported pruning ratio is computed over reasoning-side history tokens:
+Pruning is measured on each method's own generated trajectory:
 
 ```text
 100 * sum(original_reasoning_tokens - retained_reasoning_tokens)
     / sum(original_reasoning_tokens)
 ```
 
-Action blocks, tool observations, and image tokens are excluded because SPARE
-does not modify them. Each reasoning segment is counted once over its lifecycle.
+Retained reasoning includes extracted evidence. Temporary summaries, tool calls,
+observations, images, and final answers are excluded. Counts are aggregated
+within each benchmark. The main table reports sample-weighted averages across
+benchmarks, rather than an unweighted macro-average.
+
+See the [paper](assets/paper.pdf) for the complete procedure and
+[results](RESULTS.md) for the evaluation scopes.
